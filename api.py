@@ -1,6 +1,7 @@
 from datetime import datetime
 from decouple import config
 import requests
+import json
 
 
 def get_api_host() -> str:
@@ -13,29 +14,9 @@ def get_token() -> str:
     return token
 
 
-def get_rounds():
-    from mock_rounds import rounds
-    return rounds
-
-    api_host = get_api_host()
-    token = get_token()
-    res = requests.get(f"{api_host}rounds/zombidef", headers={"X-Auth-Token": token})
-
-    if res.status_code == 200:
-        data = res.json()
-        for round in data.rounds:
-            print(round['startAt'])
-    else:
-        print(f"something went wrong..")
-        try:
-            print(res.json())
-        except:
-            print(res.status_code)
-
-
-def fetchUnits():
-    from mock_units import unit
-    return unit
+def fetchUnits() -> dict:
+    with open('./mock_units.json', 'r') as f:
+        return json.loads(f.read())
 
     api_host = get_api_host()
     token = get_token()
@@ -43,7 +24,8 @@ def fetchUnits():
 
     if res.status_code == 200:
         data = res.json()
-        print()
+        # print(data)
+        return data
     else:
         print(f"something went wrong..")
         try:
@@ -51,7 +33,28 @@ def fetchUnits():
         except:
             print(res.status_code)
 
+    return None
+
+def fetchWorld() -> dict:
+ 
+    api_host = get_api_host()
+    token = get_token()
+    res = requests.get(f"{api_host}play/zombidef/world", headers={"X-Auth-Token": token})
+
+    if res.status_code == 200:
+        data = res.json()
+        print(data)
+        return data
+    else:
+        print(f"something went wrong..")
+        try:
+            print(res.json())
+        except:
+            print(res.status_code)
+
+    return None
 
     
 if __name__ == "__main__":
-    get_rounds()
+    # get_rounds()
+    pass

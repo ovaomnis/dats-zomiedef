@@ -1,12 +1,15 @@
+from dataclasses import dataclass
+from typing import List
 import pygame
 import time
-from api import fetchUnits
+from api import fetchUnits, fetchWorld
 from datetime import datetime
+from enum import Enum
 
 pygame.init()
 
 # Game data
-units_on_field = None
+units_on_field = {}
 
 # PyGame variables
 screen_width = 800
@@ -36,16 +39,27 @@ last_send_sec = 0
 start_sec = 0
 
 # Colors
-red = (255, 0, 0)
-green = (0, 255, 0)
-white = (255, 255, 255)
-blue = (0, 0, 255)
-cyan = (0, 255, 255)
-background_color = (0, 0, 0)
-black = (0, 0, 0)
+class Colors:
+    red = (255, 0, 0)
+    green = (0, 255, 0)
+    white = (255, 255, 255)
+    blue = (0, 0, 255)
+    cyan = (0, 255, 255)
+    gray = (128, 128, 128)
+    enemy = (49, 3, 255)
+    enemy_head = (49, 3, 255)
+    zomb = (93, 158, 43)
+    base = (224, 152, 18)
+    base_head = (224, 107, 18)
+    background_color = (28, 0, 156)
+    black = (0, 0, 0)
 
 # PyGame Code
 pygame.display.set_caption("Pygame Example: Movement")
+
+def find_enemis(targets: List[dict], base: List[dict]):
+    print(targets)
+    print(base)
 
 # Step Code
 def step():
@@ -56,68 +70,81 @@ def step():
     if not (abs(current - start_sec) % 2 == 0 and last_send_sec != current):
         return
     
-    units_on_field = fetchUnits()
+    units = fetchUnits()
+    if units:
+        units_on_field = units
+    
+    # print(units_on_field.get('enemyBlocks'))
+    find_enemis([
+        *(units_on_field.get('zombies') if units_on_field.get('zombies') else []),
+        *(units_on_field.get('enemyBlocks') if units_on_field.get('enemyBlocks') else [])
+    ], units_on_field.get('base', []))
+
+    
+    # print(units_on_field)
     # print(units_on_field['base'])
 
 
 def draw_base(surface: pygame.Surface):
-    if not units_on_field:
+    if not units_on_field != {} or not units_on_field.get('base'):
         return
     
     for base in units_on_field['base']:
-        base_y = scale * base['x']
-        base_x = scale * base['y']
-        if base['isHead']:
-            base_color = blue
-        else:
-            base_color = cyan
-        pygame.draw.rect(surface, blue, (base_x, base_y, scale, scale), 2)
-        # print((base_x, base_y, base_x + scale, base_y + scale))
-    # print() 
+        base_x = scale * base['x'] + field_x_offset
+        base_y = scale * base['y'] + field_y_offset
+        base_color = Colors.base_head if base.get('isHead', False) else Colors.base
+    
+        pygame.draw.rect(surface, base_color, (base_x, base_y, scale, scale))
+        # print((base_x, base_y, scale, scale))
+    # print()
+
+def draw_zombies(surface: pygame.Surface):
+    if not units_on_field != {} or not units_on_field.get("zombies"):
+        return
+    
+    for zomb in units_on_field['zombies']:
+        zomb_x = scale * zomb['x'] + field_x_offset
+        zomb_y = scale * zomb['y'] + field_y_offset
+    
+        pygame.draw.rect(surface, Colors.zomb, (zomb_x, zomb_y, scale, scale))
+
+def draw_enemies(surface: pygame.Surface):
+    if not units_on_field != {} or not units_on_field.get("enemyBlocks"):
+        return
+    
+    for enem in units_on_field['enemyBlocks']:
+        enem_x = scale * enem['x'] + field_x_offset
+        enem_y = scale * enem['y'] + field_y_offset
+        enem_color = Colors.enemy_head if enem.get('isHead', False) else Colors.enemy
+    
+        pygame.draw.rect(surface, enem_color, (enem_x, enem_y, scale, scale))
 
 
+def find_base():
+    global field_x_offset
+    global field_y_offset
 
-def get_field():
-    size = (FIELD_WIDTH, FIELD_HEIGHT)
-    field = pygame.Surface(size=size, flags=0)
-    field.fill(white)
-
-    draw_base(field)
-
-    # Draw lines
-    # for i in range(0, size[0], scale):
-    #     pygame.draw.line(field, "#e3e3e3", [i, 0], [i, size[1]])
-
-    # for i in range(0, size[1], scale):
-    #     pygame.draw.line(field, "#e3e3e3", [0, i], [size[0], i])
-
-    # draw_base(field)
-
-    return field
+    if not units_on_field or not units_on_field.get('base'):
+        return
+    
+    head = list(filter(lambda base: base.get('isHead'), units_on_field['base']))
+    if head:
+        field_x_offset = -head[0]['x'] * scale + screen_width/2
+        field_y_offset = -head[0]['y'] * scale + screen_height/2
 
 
-# def get_minimap():
-#     size = (FIELD_WIDTH / scale * minimap_scale, FIELD_HEIGHT / scale * minimap_scale)
-#     view_size = (
-#         screen_width / scale * minimap_scale,
-#         screen_height / scale * minimap_scale,
-#     )
-#     minimap = pygame.Surface(size=size, flags=pygame.SRCALPHA)
-#     minimap.fill((*white, 200))
-#     pygame.draw.rect(minimap, (*black, 100), (0, 0, *size), 1)
-#     pygame.draw.rect(
-#         minimap,
-#         red,
-#         (
-#             -field_x_offset / scale * minimap_scale,
-#             -field_y_offset / scale * minimap_scale,
-#             *(view_size),
-#         ),
-#         1,
-#     )
+def draw_zpots(surface: pygame.Surface):
+    world = fetchWorld()
+    
+    if not world or not world.get('zpots'):
+        return
+    
+    for zpot in world['zpots']:
+        zpot_x = scale * zpot['x'] + field_x_offset
+        zpot_y = scale * zpot['y'] + field_y_offset
+        pygame.draw.rect(surface, (0, 0, 0), (zpot_x, zpot_y, scale, scale))
 
-#     return minimap
-
+draw_zpots(screen)
 
 running = True
 while running:
@@ -136,17 +163,18 @@ while running:
     if keys[pygame.K_RIGHT] or keys[pygame.K_a]:
         field_x_offset -= field_x_offset_step
         # print("pressed right", field_x_offset)
+    if keys[pygame.K_t]:
+        find_base()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-    screen.fill(background_color)
-    field = get_field()
-    # minimap = get_minimap()
-
-    screen.blit(field, (field_x_offset, field_y_offset))
-    # screen.blit(minimap, (0, 0))
+    # print(Colors.white)
+    screen.fill(Colors.white)
+    draw_base(screen)
+    draw_zombies(screen)
+    draw_enemies(screen)
 
     pygame.display.update()
 
