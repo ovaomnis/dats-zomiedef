@@ -1,27 +1,35 @@
 import time
 
-from requ import get_world, get_units, post_command
+from requ import get_units, post_command, get_world
 
-def is_valid_build_position(x, y, base_cells, zombies):
 
-    """Проверяет, можно ли строить на данной позиции."""
-    if any((cell['x'] == x and cell['y'] == y) for cell in base_cells):
-        return False  # Нельзя строить на занятой ячейке базы
+def is_valid_build_position(x, y, base_cells, zombies, enemyBlocks, zpots):
+    """Проверяет, можно ли строить на данной позиции, учитывая существующие ограничения."""
+    # Проверяем, занята ли уже эта позиция клеткой базы
+    if any(cell['x'] == x and cell['y'] == y for cell in base_cells):
+        return False
     if zombies:
-        if any((zombie['x'] == x and zombie['y'] == y) for zombie in zombies):
-            return False  # Нельзя строить на ячейке с зомби
+        # Проверяем, есть ли зомби на этой позиции или рядом с ней
+        if any(zombie['x'] == x and zombie['y'] == y for zombie in zombies):
+            return False
+        if any(zombie['x'] == x + dx and zombie['y'] == y + dy for zombie in zombies for dx in [-1, 0, 1] for dy in [-1, 0, 1]):
+            return False
 
-    # Проверка соседних клеток
-    for dx in [-1, 0, 1]:
-        for dy in [-1, 0, 1]:
-            if any((zombie['x'] == x + dx and zombie['y'] == y + dy) for zombie in zombies):
-                return False  # Нельзя строить рядом с зомби
+    # Проверяем, находится ли позиция слишком близко к вражеским блокам или точкам респавна
+    min_distance_to_enemy = 1  # Минимальное расстояние до вражеских блоков
+    min_distance_to_zpot = 1   # Минимальное расстояние до точек респавна зомби
+    if enemyBlocks:
+        if any(abs(enemyBlock['x'] - x) <= min_distance_to_enemy and abs(enemyBlock['y'] - y) <= min_distance_to_enemy for enemyBlock in enemyBlocks):
+            return False
+    if any(abs(zpot['x'] - x) <= min_distance_to_zpot and abs(zpot['y'] - y) <= min_distance_to_zpot for zpot in zpots):
+        return False
 
     return True
 
 
-def prepare_build_data(base_cells, zombies):
-    """Оптимизированное строительство с учетом оборонной стратегии и пропусков."""
+
+def prepare_build_data(base_cells, zombies, gold, enemyBlocks, zpots):
+    """Оптимизированное строительство с учетом оборонной стратегии, сетки с пропусками и доступного золота."""
     builds = []
     head_cell = next((cell for cell in base_cells if cell.get('isHead', False)), None)
     if not head_cell:
@@ -29,25 +37,26 @@ def prepare_build_data(base_cells, zombies):
         return builds
 
     all_cells = set((cell['x'], cell['y']) for cell in base_cells)
-    strategic_positions = [(2, 0), (-2, 0), (0, 2), (0, -2)]
-    secondary_positions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+    directions = [(2, 0), (-2, 0), (0, 2), (0, -2)]  # Стратегическое движение через одну клетку
 
+    # Перебираем каждую ячейку и проверяем возможные позиции для строительства
     for cell in base_cells:
-        # Приоритет строительства в стратегических позициях
-        for dx, dy in strategic_positions:
+        for dx, dy in directions:
             new_x, new_y = cell['x'] + dx, cell['y'] + dy
-            if (new_x, new_y) not in all_cells and is_valid_build_position(new_x, new_y, base_cells, zombies):
-                builds.append({'x': new_x, 'y': new_y})
-                all_cells.add((new_x, new_y))
-        # Вторичное строительство в менее важных позициях
-        for dx, dy in secondary_positions:
-            new_x, new_y = cell['x'] + dx, cell['y'] + dy
-            if (new_x, new_y) not in all_cells and is_valid_build_position(new_x, new_y, base_cells, zombies):
-                builds.append({'x': new_x, 'y': new_y})
-                all_cells.add((new_x, new_y))
+            if (new_x, new_y) not in all_cells and is_valid_build_position(new_x, new_y, base_cells, zombies, enemyBlocks, zpots):
+                adjacent_x1, adjacent_y1 = cell['x'] + dx // 2, cell['y'] + dy // 2
+                adjacent_x2, adjacent_y2 = cell['x'] - dx // 2, cell['y'] - dy // 2
+                if ((adjacent_x1, adjacent_y1) in all_cells or (adjacent_x2, adjacent_y2) in all_cells):
+                    if gold > 0:  # Проверяем, есть ли достаточно золота для строительства
+                        builds.append({'x': new_x, 'y': new_y})
+                        all_cells.add((new_x, new_y))
+                        gold -= 1  # Уменьшаем количество доступного золота
+                    else:
+                        break
 
     print(f"Планируется строительство {len(builds)} новых ячеек.")
     return builds
+
 
 
 
@@ -91,36 +100,45 @@ def predict_fire_coordinates(zombie):
 
     return predicted_positions
 
+def predict_fire_coordinates(zombie):
+    """Вычисляет текущие координаты зомби для непосредственной атаки."""
+    x, y = zombie['x'], zombie['y']
+    return [(x, y)]  # Возвращаем список с одной парой координат
 
 
-def prepare_attack_data(base_cells, zombies, enemyBlocks):
+def prepare_attack_data(base_cells, zombies, enemyBlocks, gold, zpots):
     """Подготавливает данные для команды атаки, учитывая текущие позиции зомби и ячейки базы."""
     attack_commands = []
-    all_predicted_positions = []
+    all_current_positions = [predict_fire_coordinates(zombie) for zombie in zombies]
 
-    # Сортировка зомби по здоровью, затем получение предполагаемых позиций
-    if zombies:
-        sorted_zombies = sorted(zombies, key=lambda z: z.get('health', float('inf')))  # Сортируем по здоровью, меньшее здоровье имеет приоритет
-        for zombie in sorted_zombies:
-            predicted_positions = predict_fire_coordinates(zombie)
-            all_predicted_positions.extend(predicted_positions)
+    # Словарь для контроля количества атак каждой ячейкой
+    cell_targets = {}
 
-    if enemyBlocks:
-        for enemyBlock in enemyBlocks:
-            all_predicted_positions.append((enemyBlock['x'], enemyBlock['y']))
-
-    # Определяем, какие ячейки базы могут атаковать предполагаемые позиции
+    # Определяем, какие ячейки базы могут атаковать текущие позиции зомби
     if base_cells:
         for cell in base_cells:
-            for target in all_predicted_positions:
-                if is_within_range(cell, target, cell['range']):
-                    attack_commands.append({
-                        "blockId": cell['id'],
-                        "target": {"x": target[0], "y": target[1]}
-                    })
-        builds = prepare_build_data(base_cells, zombies)
+            for target in all_current_positions:
+                if is_within_range(cell, target[0], cell['range']):
+                    if cell['id'] not in cell_targets:
+                        cell_targets[cell['id']] = target[0]
+                        break
+
+    # Формирование команд атаки на основе назначенных целей
+    for cell_id, target in cell_targets.items():
+        attack_commands.append({
+            "blockId": cell_id,
+            "target": {"x": target[0], "y": target[1]}
+        })
+
+    builds = prepare_build_data(base_cells, zombies, gold, enemyBlocks, zpots)
 
     return {"attack": attack_commands, "build": builds}
+
+
+    builds = prepare_build_data(base_cells, zombies, gold, enemyBlocks, zpots)
+
+    return {"attack": attack_commands, "build": builds}
+
 
 
 def is_within_range(cell, target, range):
@@ -134,24 +152,30 @@ while True:
     units = get_units()
     if 'error' in units:
         print("Error fetching units:", units)
-        time.sleep(0.5)
+        time.sleep(1)
         continue
 
-
-    print(units["player"]["zombieKills"], units["player"]["enemyBlockKills"], units["player"]["gold"], len(units["base"]))
+    try:
+        print(units["player"]["zombieKills"], units["player"]["enemyBlockKills"], units["player"]["gold"], len(units["base"]))
+    except Exception as e:
+        print("Error while printing units", e)
+        time.sleep(10)
+        continue
     zombies = units["zombies"]
     base_cells = units["base"]
     enemyBlocks = units["enemyBlocks"]
+    zpots = get_world()["zpots"]
     try:
-        data = prepare_attack_data(base_cells, zombies, enemyBlocks)
-       # data["moveBase"] =  {"x": 173, "y": 169} # moveBase)
+        data = prepare_attack_data(base_cells, zombies, enemyBlocks, units["player"]["gold"], zpots)
+        #data["moveBase"] =  {"x": 472, "y": 8} # moveBase)
     except Exception as e:
         print("Error while preparing attack data", e)
         continue
     if not data:
         continue
     if zombies and base_cells:
-       post_command(data)
+       response = post_command(data)
+
     else:
         print("No zombies or base cells found")
 
