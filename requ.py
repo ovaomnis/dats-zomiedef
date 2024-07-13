@@ -3,7 +3,7 @@ from decouple import config
 import requests
 
 # Основной URL API
-BASE_URL = "https://games.datsteam.dev"
+BASE_URL = "https://games-test.datsteam.dev"
 
 # Токен авторизации
 AUTH_TOKEN = config('AUTH_TOKEN')
@@ -15,15 +15,6 @@ def get_endpoint(endpoint):
     response = requests.get(url, headers=headers)
     return response.json()
 
-def post_command(data):
-    """Отправка команды в игре."""
-    endpoint = "play/zombidef/command"
-    return post_endpoint(endpoint, data)
-
-def put_participate(data):
-    """Участие в игре."""
-    endpoint = "play/zombidef/participate"
-    return put_endpoint(endpoint, data)
 
 def get_units():
     """Получение информации о юнитах."""
@@ -60,21 +51,22 @@ def put_endpoint(endpoint, data):
     response = requests.put(url, json=data, headers=headers)
     return response.json()
 
-# Пример использования функций
-if __name__ == "__main__":
-    # Отправка команды
-    command_data = {"action": "move", "parameters": {"direction": "north"}}
-    print(post_command(command_data))
 
-    # Участие в игре
-    participation_data = {"player_id": 12345}
-    print(put_participate(participation_data))
 
-    # Получение информации о юнитах
-    print(get_units())
+def post_command(data):
+    """Отправка команды в игре."""
+    endpoint = "play/zombidef/command"
+    return post_endpoint(endpoint, data)
 
-    # Получение информации о мире
-    print(get_world())
+def put_participate(data):
+    """Участие в игре."""
+    endpoint = "play/zombidef/participate"
+    return put_endpoint(endpoint, data)
 
-    # Получение информации о раундах
-    print(get_rounds())
+
+
+
+
+
+
+
