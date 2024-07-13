@@ -238,16 +238,16 @@ def step():
     #     *(units_on_field.get('zombies') if units_on_field.get('zombies') else []),
     #     *(units_on_field.get('enemyBlocks') if units_on_field.get('enemyBlocks') else [])
     # ], units_on_field.get('base', []))
-    if units_on_field:
-        enemies = find_targets(
-            units_on_field.get("zombies"),
-            units_on_field.get("enemyBlocks"),
-            units_on_field.get("base"),
-        )
-        # print(enemies)
-        commands_to_execute["attack"] = enemies
-        generate_radius_area(units_on_field.get("base"))
-        postCommands(commands_to_execute)
+    # if units_on_field:
+    #     enemies = find_targets(
+    #         units_on_field.get("zombies"),
+    #         units_on_field.get("enemyBlocks"),
+    #         units_on_field.get("base"),
+    #     )
+    #     # print(enemies)
+    #     commands_to_execute["attack"] = enemies
+    #     generate_radius_area(units_on_field.get("base"))
+    #     postCommands(commands_to_execute)
     
     
     # print(commands_to_execute)
