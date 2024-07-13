@@ -32,38 +32,44 @@ def prepare_build_data(base_cells, zombies):
 
     return builds
 def predict_fire_coordinates(zombie):
-    """Вычисляет координаты для атаки на упреждение в зависимости от типа и движения зомби, кроме 'chaos_knight'."""
+    """Вычисляет координаты для атаки на упреждение, учитывая тип, скорость и задержку зомби."""
     x, y, z_type, direction = zombie['x'], zombie['y'], zombie['type'], zombie.get('direction', '')
+    speed = zombie.get('speed', 1)  # Значение по умолчанию, если скорость не указана
+    wait_turns = zombie.get('waitTurns', 0)  # Значение по умолчанию, если задержка не указана
     predicted_positions = []
 
-    if z_type == 'liner' or z_type == 'normal' or z_type == 'juggernaut' or z_type == 'bomber':
-        # Эти типы предполагают движение в указанном направлении на одну клетку
-        move_map = {
-            'left': (-1, 0), 'right': (1, 0), 'up': (0, -1), 'down': (0, 1)
-        }
-        dx, dy = move_map.get(direction, (0, 0))
-        predicted_positions.append((x + dx, y + dy))
-
-    elif z_type == 'fast':
+    if wait_turns > 0:
+        # Зомби ожидает, не двигаясь
+        predicted_positions.append((x, y))
+    else:
+        if z_type in ['liner', 'normal', 'juggernaut', 'bomber']:
             move_map = {
-                'left': (-2, 0), 'right': (2, 0), 'up': (0, -2), 'down': (0, 2)
+                'left': (-1, 0), 'right': (1, 0), 'up': (0, -1), 'down': (0, 1)
             }
             dx, dy = move_map.get(direction, (0, 0))
-            predicted_positions.append((x + dx, y + dy))
+            for step in range(1, speed + 1):  # Учитываем скорость зомби
+                predicted_positions.append((x + dx * step, y + dy * step))
 
-    elif z_type == 'chaos_knight':
-        # Определение двух возможных позиций на основе направления движения
-        knight_moves = {
-            'left': [(-1, 2), (-1, -2)],
-            'right': [(1, 2), (1, -2)],
-            'up': [(2, -1), (-2, -1)],
-            'down': [(2, 1), (-2, 1)]
-        }
-        possible_moves = knight_moves.get(direction, [])
-        for move in possible_moves:
-            predicted_positions.append((x + move[0], y + move[1]))
+        elif z_type == 'fast':
+            move_map = {
+                'left': (-1, 0), 'right': (1, 0), 'up': (0, -1), 'down': (0, 1)
+            }
+            dx, dy = move_map.get(direction, (0, 0))
+            predicted_positions.append((x + dx * speed, y + dy * speed))
+
+        elif z_type == 'chaos_knight':
+            knight_moves = {
+                'left': [(-1, 2), (-1, -2)],
+                'right': [(1, 2), (1, -2)],
+                'up': [(2, -1), (-2, -1)],
+                'down': [(2, 1), (-2, 1)]
+            }
+            possible_moves = knight_moves.get(direction, [])
+            for move in possible_moves:
+                predicted_positions.append((x + move[0], y + move[1]))
 
     return predicted_positions
+
 
 
 def prepare_attack_data(base_cells, zombies, enemyBlocks):
@@ -92,6 +98,8 @@ def prepare_attack_data(base_cells, zombies, enemyBlocks):
                     "target": {"x": target[0], "y": target[1]}
                 })
     builds = prepare_build_data(base_cells, zombies)
+    print("Attack commands:", attack_commands)
+
     return {"attack": attack_commands, "build": builds}
 
 def is_within_range(cell, target, range):
