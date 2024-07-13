@@ -1,0 +1,165 @@
+{
+    "realmName": "test-day1-8",
+    "player": {
+        "gold": 10,
+        "points": 0,
+        "name": "ZomPy",
+        "zombieKills": 0,
+        "enemyBlockKills": 0,
+        "gameEndedAt": null
+    },
+    "base": [
+        {
+            "id": "0190a830-fae6-74da-b8f3-3a1ac4e80771",
+            "x": 47,
+            "y": 44,
+            "health": 200,
+            "attack": 40,
+            "range": 8,
+            "isHead": true,
+            "lastAttack": null
+        },
+        {
+            "id": "0190a830-fae6-74df-9dc4-28821bdb5706",
+            "x": 48,
+            "y": 44,
+            "health": 58,
+            "attack": 10,
+            "range": 5,
+            "lastAttack": null
+        },
+        {
+            "id": "0190a830-fae6-74e2-b837-f410ca540025",
+            "x": 47,
+            "y": 45,
+            "health": 70,
+            "attack": 10,
+            "range": 5,
+            "lastAttack": null
+        },
+        {
+            "id": "0190a830-fae6-74e6-919c-49d0f6ea5f99",
+            "x": 48,
+            "y": 45,
+            "health": 80,
+            "attack": 10,
+            "range": 5,
+            "lastAttack": null
+        }
+    ],
+    "zombies": [
+        {
+            "x": 58,
+            "y": 47,
+            "id": "dd73eb28-860a-4065-80a9-37d7dfaf4b8f",
+            "type": "liner",
+            "health": 5,
+            "attack": 1,
+            "speed": 1,
+            "waitTurns": 1,
+            "direction": "left"
+        },
+        {
+            "x": 47,
+            "y": 36,
+            "id": "c1de2e70-c0cc-4c20-8df7-481802fed930",
+            "type": "juggernaut",
+            "health": 7,
+            "attack": 999999,
+            "speed": 1,
+            "waitTurns": 2,
+            "direction": "left"
+        },
+        {
+            "x": 57,
+            "y": 46,
+            "id": "c2215d21-1f63-457b-99b2-67d991bf90a3",
+            "type": "liner",
+            "health": 5,
+            "attack": 1,
+            "speed": 1,
+            "waitTurns": 1,
+            "direction": "left"
+        },
+        {
+            "x": 56,
+            "y": 52,
+            "id": "7c5a4d01-5c24-4ef0-9349-23435bef69e7",
+            "type": "bomber",
+            "health": 3,
+            "attack": 1,
+            "speed": 1,
+            "waitTurns": 1,
+            "direction": "right"
+        },
+        {
+            "x": 45,
+            "y": 37,
+            "id": "207a8681-b0d3-4015-8d57-c370d8813946",
+            "type": "fast",
+            "health": 7,
+            "attack": 7,
+            "speed": 2,
+            "waitTurns": 1,
+            "direction": "left"
+        },
+        {
+            "x": 37,
+            "y": 39,
+            "id": "9778865c-8c05-48da-9411-245faa59fc2d",
+            "type": "fast",
+            "health": 2,
+            "attack": 1,
+            "speed": 2,
+            "waitTurns": 1,
+            "direction": "left"
+        },
+        {
+            "x": 52,
+            "y": 49,
+            "id": "4b47d3fc-18c7-4597-9f13-3e9a0869b80c",
+            "type": "chaos_knight",
+            "health": 5,
+            "attack": 1,
+            "speed": 3,
+            "waitTurns": 1,
+            "direction": "left"
+        },
+        {
+            "x": 46,
+            "y": 46,
+            "id": "4b47d3fc-18c7-4597-9f13-3e9a086fadf3",
+            "type": "chaos_knight",
+            "health": 5,
+            "attack": 1,
+            "speed": 3,
+            "waitTurns": 1,
+            "direction": "right"
+        },
+        {
+            "x": 45,
+            "y": 46,
+            "id": "4b47d3fc-18c7-4597-9f13-3e9a0869dfsg",
+            "type": "chaos_knight",
+            "health": 5,
+            "attack": 1,
+            "speed": 3,
+            "waitTurns": 1,
+            "direction": "down"
+        },
+        {
+            "x": 50,
+            "y": 43,
+            "id": "4b47d3fc-18c7-4597-9f13-3e9a0869b834",
+            "type": "liner",
+            "health": 5,
+            "attack": 1,
+            "speed": 1,
+            "waitTurns": 1,
+            "direction": "left"
+        }
+    ],
+    "enemyBlocks": null,
+    "turnEndsInMs": 824,
+    "turn": 14
+}
