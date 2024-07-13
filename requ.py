@@ -3,7 +3,7 @@ from decouple import config
 import requests
 
 # Основной URL API
-BASE_URL = "https://games-test.datsteam.dev"
+BASE_URL = "https://games.datsteam.dev"
 
 # Токен авторизации
 AUTH_TOKEN = config('AUTH_TOKEN')
