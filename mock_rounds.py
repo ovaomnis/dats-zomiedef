@@ -8,7 +8,7 @@ rounds = {
             "name": "Round 1",
             "repeat": 1,
             "startAt": "2021-01-01T00:00:00Z",
-            "status": "active"
+            "status": "active",
         },
         {
             "duration": 60,
@@ -16,7 +16,7 @@ rounds = {
             "name": "Round 2",
             "repeat": 1,
             "startAt": "2021-01-01T01:00:00Z",
-            "status": "active"
+            "status": "active",
         },
         {
             "duration": 60,
@@ -24,7 +24,7 @@ rounds = {
             "name": "Round 3",
             "repeat": 1,
             "startAt": "2021-01-01T02:00:00Z",
-            "status": "active"
+            "status": "active",
         },
         {
             "duration": 60,
@@ -32,7 +32,7 @@ rounds = {
             "name": "Round 4",
             "repeat": 1,
             "startAt": "2021-01-01T03:00:00Z",
-            "status": "active"
+            "status": "active",
         },
         {
             "duration": 60,
@@ -40,7 +40,7 @@ rounds = {
             "name": "Round 5",
             "repeat": 1,
             "startAt": "2021-01-01T04:00:00Z",
-            "status": "active"
-        }
-    ]
+            "status": "active",
+        },
+    ],
 }
